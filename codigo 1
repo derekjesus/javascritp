@@ -1,0 +1,341 @@
+/* debug para javascript */
+console.log("Hello world!");
+
+
+
+/* checkbox */
+
+$("#anticipo").change(function(e){
+
+    if( $(this).is(':checked') )
+    {
+      $(".opciones-anticipo").css('display','block');
+      $('.sin_anticipo').checkbox('set unchecked');
+    }
+    else{
+      $(".opciones-anticipo").css('display','none');
+
+     //$('#sin_anticipo').checkbox('set checked',true);
+
+    }
+    $("#importe-anticipo").val('');
+    
+    
+});
+
+
+
+/* radio */
+
+$(".importe-pagar").change(function(){
+
+	var total=0;
+	var arr = document.getElementsByClassName("importe-pagar");
+	
+	 /*  traemos un array de todos los campos con esa misma clase */
+	
+	/* realizamos un foreach */
+	
+	$.each(arr, function (index, value) {
+	
+		if (!value.disabled){
+		
+		 /* el valos disabled fue agregado por necesidades puntuales de ese proyecto, se puede cambiar segun lo que se necesite */
+		 
+		 
+			total = parseFloat(total) + parseFloat(value.value);
+		}
+	
+	
+	
+	});
+	
+	if(total<0){total=0;}
+	$("#por_pagar").html( parseFloat(total).toFixed(2));
+	
+
+});
+
+
+/* parseFloat y  toFixed */
+    var nuevo_por_pagar = parseFloat(por_pagar).toFixed(2) -  parseFloat(monto).toFixed(2);
+    
+    
+    
+    
+    /* */
+    
+	 var pageVal = $("#paginaPaginador").val();
+
+	var mainDataSource = new kendo.data.DataSource({
+		transport: {
+			read:function(options){
+        options.data.q = $('#search00').val();
+				 dataSourceBinding2(options,"/aprobaciones/svc/get-main-list/")
+			}
+		},
+		
+		serverFiltering: true,
+		serverPaging: true,
+		serverSorting:true,
+		autoSync: true,
+		pageSize: 10000,
+		page: pageVal,
+		schema: {
+			data:		 'data',
+			total:	'count',
+			model: {
+				id: "blank_id"
+			}
+		}
+	});
+    
+ 
+function dataSourceBinding2(dataSourceOptions, url)
+{
+
+  $.ajax({
+		  url:url,
+		  dataType :'json',
+		  method:'POST',
+		  data:dataSourceOptions.data,
+		  beforeSend: function( xhr ) {
+		    freeze();
+		  }
+		})
+		.done(function( response ) {
+
+	  	if(response.status==STATUS_LOGOUT)
+	  	{
+	  		var html=$.parseHTML(data.html,document,true);
+		    _showLogin(data.html);
+
+	  	}else{
+				console.log(response.data.data);
+	  		
+	  		document.getElementById("fotos").innerHTML = response.data.data;
+	  		document.getElementById("numeroFotos").innerHTML = 'Total de '+response.data.count+' Fotos';	  		
+
+	  		/* paginador */
+	  		var countF = response.data.count;
+	  		var pageF = response.data.page;
+	  		var pageSizeF = response.data.pageSize;
+	  		var pageFinal = countF / pageSizeF
+	  				pageFinal0 = pageFinal.toFixed(0);
+
+	  		if(pageFinal=>pageFinal0)
+	  		{
+	  			pageFinal =pageFinal;
+	  			pageFinal = pageFinal.toFixed(0);
+	  		}
+
+	  		var countIni = 1;
+	  		if(pageF-2>0)
+	  		{
+	  		$countIni = pageF-2;	  		
+	  		}
+	  		else
+	  		if(pageF-1>0)
+	  		{
+	  			countIni = pageF-1;	  	  		
+	  		}
+	  		else
+	  		{
+	  			countIni = pageF;	  	  		
+	  		}
+	  	  
+				$("#p_final").attr("title",pageFinal);
+
+				var text = "";
+				i=1;
+				do {
+					
+					$("#p_"+i).attr("title",countIni);
+					
+				  $("#p_"+i).html(countIni);
+					if(countIni== $("#paginaPaginador").val())
+					{
+						$("#p_"+i).addClass( "active" );	
+					}
+				 if(countIni>pageFinal)
+				 {
+					$("#p_"+i).remove();	 	
+				 }
+
+				  countIni++;
+				  i++;
+				}
+				while (countIni < 6);
+			 /* fin de paginador */ 		
+
+				dataSourceOptions.success(response.data);
+				unfreeze();
+
+				$(".estado_aprobacion").click(function(){
+		     
+		    	var nuevostate = 1;
+		    	var stateval =$(this).attr("rel");
+		    	var id =$(this).attr("id");
+		    	var title =$(this).attr("title");
+					var texto = $('#txt'+title).val();
+		    	
+					if(stateval==="ACTIVO"){ nuevostate = 1; }
+					if(stateval==="BLOQUEAR"){ nuevostate = 2; }
+ 
+		    	callSvc("/aprobaciones/svc/Aprobaciones-Cambio",{id:id,st:nuevostate,tipo:title, texto:texto},function(data){
+		    		console.log(data);
+		    		},true,true);
+		    	    
+		
+				});
+
+				$(".guardar_item").click(function(){
+		    
+		    	var nuevostate = 1;
+		    	var stateval =$(this).attr("rel");
+		    	var id =$(this).attr("id");
+		    	var title =$(this).attr("title");
+  				var texto = $('#txt'+title).val();
+ 
+					if(stateval==="ACTIVO"){ nuevostate = 1; }
+					if(stateval==="BLOQUEAR"){ nuevostate = 2; }
+ 
+		    	callSvc("/aprobaciones/svc/Aprobaciones-guardar",{id:id,st:nuevostate,tipo:title, texto:texto},function(data){
+		    		console.log(data);
+		    		},true,true);
+		    	    
+		
+				});
+	  	}
+	  })
+
+	  .fail(function(response){
+
+	  	dataSourceOptions.error(response.data);
+	  	unfreeze();
+
+	  })
+	  .always(function(){
+
+			unfreeze();
+
+	  });
+
+}
+
+
+
+  $(".pagination .item ").click(function()
+	 {
+    	var id = $(this).attr("title");
+  		$("#paginaPaginador").val(id);
+  		var page = $("#paginaPaginador").val();
+      var datos = {pageSize:10000, page:page};
+      callSvc('/aprobaciones/svc/get-main-list/',datos, function(data)
+    {
+      if(data !='' )
+      {
+      	
+					$(".estado_aprobacion").click(function(){
+		     
+		    	var nuevostate = 1;
+		    	var stateval =$(this).attr("rel");
+		    	var id =$(this).attr("id");
+		    	var title =$(this).attr("title");
+				  
+				  if(stateval==="ACTIVO"){ nuevostate = 1; }
+					if(stateval==="BLOQUEAR"){ nuevostate = 2; }
+
+ 
+		    	callSvc("/aprobaciones/svc/Aprobaciones-Cambio",{id:id,st:nuevostate,tipo:title},function(data){
+		    		console.log(data);
+		    		},true,true);
+		    		
+				});
+				
+			  data = data.data;
+				document.getElementById("fotos").innerHTML = data.data;
+	  		document.getElementById("numeroFotos").innerHTML = 'Total de '+data.count+' Fotos';	  		
+/*
+ 				$("#fotos").html(data.data).done(function(   ) { 	 
+					alert('0');
+ 				});
+ 				$("#numeroFotos").html('Total de '+data.count+' Fotos').done(function(   ) { 
+					alert('0');
+ 				});
+
+*/
+	  		/* paginador */
+	  		var countF = data.count;
+	  		var pageF = data.page;
+	  		var pageSizeF = data.pageSize;
+	  		var pageFinal = countF / pageSizeF
+	  				pageFinal0 = pageFinal.toFixed(0);
+ 	  		if(pageFinal=>pageFinal0)
+	  		{
+	  			pageFinal =pageFinal;
+	  			pageFinal = pageFinal.toFixed(0);
+	  		}
+
+	  		var countIni = 1;
+	  		if(pageF-2>0)
+	  		{
+	  		$countIni = pageF-2;	  		
+	  		}
+	  		else
+	  		if(pageF-1>0)
+	  		{
+	  			countIni = pageF-1;	  	  		
+	  		}
+	  		else
+	  		{
+	  			countIni = pageF;	  	  		
+	  		}
+	  	  
+				$("#p_final").attr("title",pageFinal);
+				var text = "";
+				i=1;
+				do {
+					$("#p_"+i).removeClass( "active" );
+					$("#p_"+i).attr("title",countIni);
+					$("#p_"+i).html(countIni);
+					if(countIni== $("#paginaPaginador").val())
+					{
+						$("#p_"+i).addClass( "active" );	
+					}
+					if(countIni>pageFinal)
+					{
+						$("#p_"+i).remove();	 	
+					}
+				  countIni++;
+				  i++;
+				}
+				while (countIni < 6);
+				 /* fin de paginador */ 		
+	
+				$(".estado_foto").click(function(){
+			     	var nuevostate = 1;
+			    	var stateval =$(this).attr("rel");
+			    	var id =$(this).attr("id");
+						if(stateval==="NUEVO"){ nuevostate = 2; }
+						if(stateval==="BLOQUEADO"){ nuevostate = 2; }
+						if(stateval==="ACTIVO"){ nuevostate = 3; }
+			    	callSvc("/usuarios/svc/Usuarios-foto-estado",{id:id,st:nuevostate},function(data){
+			    		console.log(data);
+			    		},true,true);
+				});
+         
+    	}
+    });
+
+	});
+ 
+  var startPage = function() {
+	 	mainDataSource.read();
+		$('#bmg-blank-button-create').click(function(e){
+			e.preventDefault();
+			loadDialogUi('/aprobaciones/svc/ajx-ficha');
+		});
+
+  };
+
